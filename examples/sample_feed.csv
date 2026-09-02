@@ -1,0 +1,9 @@
+product_id,name,price,category,description,scraped_at
+P001,Prickly pear seed oil 30ml,89.90,oils,Cold-pressed 30ml bottle,2026-07-30T17:07:00Z
+P002,Sweet almond oil 100ml,24.50,oils,Refined sweet almond oil,2026-07-30T17:07:00Z
+P003,Nigella oil 50ml,,oils,Black seed oil 50ml,2026-07-30T17:07:00Z
+P004,Sesame oil 250ml,18.00,,Toasted sesame oil,2026-07-30T17:07:00Z
+P005,Argan oil 60ml,   ,oils,Cosmetic grade argan,2026-07-30T17:07:00Z
+P006,Rosemary hydrosol 200ml,12.75,hydrosols,Steam distilled,2026-07-30T17:07:00Z
+P007,Lavender hydrosol 200ml,12.75,hydrosols,Steam distilled,2026-07-30T17:07:00Z
+P008,Jojoba oil 30ml,31.00,oils,Golden jojoba,2026-07-30T17:07:00Z

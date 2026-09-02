@@ -1,0 +1,49 @@
+# Example rule set for a scraped product/price feed.
+#
+# Nothing here is specific to this package — the column names are yours. Point
+# `id_column` and `timestamp_column` at whatever your feed calls them, list the
+# columns that must be populated, and the gate does the rest.
+#
+# Copy this file, rename it, and edit. Onboarding a new feed should never
+# require a code change.
+
+feed_id: example-competitor-prices
+
+# Used to name offending rows in the report and to split clean/quarantined
+# output. If omitted, the DataFrame index is used instead.
+id_column: product_id
+
+# The column the gate dates the feed by. Required for the freshness check —
+# without it the gate cannot tell a live feed from a frozen one, and says so
+# rather than silently passing.
+timestamp_column: scraped_at
+
+freshness:
+  enabled: true
+  # Fail once the newest row in the feed is older than this. Set it slightly
+  # above your real scrape cadence: a daily scraper wants 2, not 1, so a single
+  # missed run warns rather than pages.
+  max_age_days: 7
+  severity: fail
+
+completeness:
+  enabled: true
+  columns:
+    # A row with no price cannot participate in a margin calculation, so the
+    # tolerance is tight and offending rows are held back.
+    price:
+      max_null_ratio: 0.02
+      severity: fail
+      quarantine: true
+
+    # Category drives grouping and comparison. Useful to know about, but a gap
+    # here should not stop a pipeline — hence warn, and the rows still flow.
+    category:
+      max_null_ratio: 0.05
+      severity: warn
+      quarantine: false
+
+    description:
+      max_null_ratio: 0.10
+      severity: warn
+      quarantine: false

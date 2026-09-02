@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Environments
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Testing / tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+
+# Gate output artifacts — verdicts are reproducible, never committed
+report.json
+clean.csv
+held.csv
+quarantine.csv
+
+# Never commit real feed data. Only examples/ (synthetic) is tracked.
+data/
+*.parquet
+!examples/*.csv
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
