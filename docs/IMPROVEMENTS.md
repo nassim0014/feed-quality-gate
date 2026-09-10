@@ -139,38 +139,24 @@ note is what makes a threshold adjustable by someone other than its author.
 
 ---
 
-## Blocked
-
-### 0. Add the CI workflow — needs `workflow` token scope
-
-`.github/workflows/ci.yml` was written and its logic verified locally, but it
-could **not** be pushed: the token in use carries only `gist, read:org, repo`,
-and GitHub refuses to create workflow files without the `workflow` scope. The
-repository therefore currently has **no CI**.
-
-To fix, re-auth and add the file (its content is in the genesis run log at
-`loop-engine/logs/2026-09-02-genesis-ci.yml`):
-
-```bash
-gh auth login -h github.com -s repo,workflow
-```
-
-The workflow runs ruff and pytest on Python 3.11 and 3.12, then smoke-tests the
-CLI against the intentionally-broken example feed and fails if the gate passes
-it. Do this before item #1 — every item below adds a check, and adding checks
-without CI is how a regression gets in unnoticed.
-
----
-
 ## Done
 
+- **0. CI workflow added** — closed loop, 2026-09-10. `.github/workflows/ci.yml`
+  now present: `ruff check .` + `pytest -q` on Python 3.11 and 3.12, then a CLI
+  smoke test that runs `fqg check` against the intentionally-broken example feed
+  and fails if the gate exits 0. Content is the workflow written (but un-pushable)
+  by the genesis run; pushed now that the token carries the `workflow` scope.
+  Verified locally before push: `pip install -e ".[dev]"` clean, `ruff` clean,
+  `pytest -q` → 45 passed, `fqg check examples/sample_feed.csv` → exit 1 as
+  designed. README's "No CI yet" note replaced and a status badge added.
+  This unblocks items #1–#5 (each adds a check; CI is what keeps the next one
+  from regressing a prior one).
 - **v1 scaffold** — genesis loop, 2026-09-02. `models.py` (`Severity`,
   `CheckResult`, `FeedReport`, weighted scoring), `rules.py` (declarative YAML +
   readable validation errors), `checks.py` (`freshness`, `completeness`),
   `gate.py` (`evaluate` / `gate` split), `report.py` (JSON, console, Markdown,
   exit codes), `cli.py` (`fqg check`, `fqg explain`), working example feed.
-  **45 tests passing and ruff clean, verified locally** — not yet verified by
-  CI, see "Blocked" above.
+  **45 tests passing and ruff clean, verified locally.**
 - **pandas dtype portability fix** — `_is_blank` tested `dtype == object`, which
   silently stopped matching whitespace-only values on pandas 3.x (where text
   columns are typed `str`). Found by the end-to-end smoke test, not the unit
