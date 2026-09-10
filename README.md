@@ -1,5 +1,7 @@
 # feed-quality-gate (`fqg`)
 
+[![CI](https://github.com/nassim0014/feed-quality-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/nassim0014/feed-quality-gate/actions/workflows/ci.yml)
+
 A declarative quality-and-freshness gate for tabular product/price feeds. Point
 it at a feed and a rules file; it profiles the feed, scores it, splits the safe
 rows from the unsafe ones, and exits non-zero when the feed should not be
@@ -174,10 +176,10 @@ ruff check .
 Tests use synthetic fixtures exclusively. See [`CLAUDE.md`](CLAUDE.md) for
 conventions.
 
-> **No CI yet.** The workflow is written but could not be pushed — the token
-> creating this repo lacked GitHub's `workflow` scope. The suite passes locally
-> on Python 3.12; nothing has verified it on 3.11. See item 0 in
-> [`docs/IMPROVEMENTS.md`](docs/IMPROVEMENTS.md).
+CI runs `ruff` and `pytest` on Python 3.11 and 3.12, then smoke-tests the CLI
+against the intentionally-broken example feed and fails if the gate passes it —
+see [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The `[astk]` extra is
+deliberately not installed in CI (private repo, no credentials).
 
 ## Licence
 
