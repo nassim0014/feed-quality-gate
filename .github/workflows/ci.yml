@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11 and 3.12 differ in the pandas major they resolve to, which is
+        # exactly where the first dtype bug in this repo lived. Keep both.
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        # Core + dev only. The [astk] extra is deliberately NOT installed: it
+        # points at a private repo and CI has no credentials for it.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest -q
+
+      - name: Smoke test the CLI
+        # The example feed is intentionally broken, so the gate MUST exit 1.
+        # A 0 here means the gate stopped detecting anything.
+        run: |
+          if fqg check -i examples/sample_feed.csv -r rules.example.yaml; then
+            echo "::error::gate passed on the intentionally-broken example feed"
+            exit 1
+          fi
+          echo "gate correctly rejected the broken example feed"
