@@ -77,6 +77,14 @@ something this package fetches. No network calls (see `CLAUDE.md` rule 5).
 
 ---
 
+### 11. CLI's parquet/json input branches and `explain`'s error path are untested   `source: coverage`
+
+`feed_quality_gate/cli.py` is at 89% (47 stmts, 5 miss): `_read_feed`'s `.parquet`/`.pq` branch (line 32) and `.json`/`.jsonl` branch (line 34) are never exercised by tests — only CSV input is tested end-to-end, despite the README advertising Parquet/JSON as supported formats. Separately, the `explain` command's `RulesError` handler (lines 80-82, which mirrors the already-tested one in `check`) is uncovered.
+
+### 12. `gate()`'s id-column-less quarantine fallback (one line) is untested   `source: coverage`
+
+`gate()` in `feed_quality_gate/gate.py` has one uncovered line — line 76, the `df.index.isin(report.quarantined_ids)` fallback used when `rules.id_column` is `None` or absent from the frame (96% file coverage, line 76 the only miss). This is a legal, likely-common config, and its id-column counterpart on line 74 is covered; the fallback pairs with `_row_ids` in `checks.py:27-30`, which emits index values in the same case. A test that gates a frame with no `id_column` configured would close it.
+
 ## Next
 
 ### 6. Alerting integration with de-duplication
