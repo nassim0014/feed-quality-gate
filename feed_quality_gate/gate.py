@@ -15,7 +15,12 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
-from .checks import check_completeness, check_freshness, quarantine_ids_for
+from .checks import (
+    check_completeness,
+    check_freshness,
+    check_per_source_completeness,
+    quarantine_ids_for,
+)
 from .models import CheckResult, FeedReport
 from .rules import Rules
 
@@ -36,6 +41,13 @@ def evaluate(
 
     if rules.completeness.enabled:
         results.extend(check_completeness(df, rules.completeness, rules.id_column))
+
+    if rules.per_source_completeness.enabled:
+        results.append(
+            check_per_source_completeness(
+                df, rules.per_source_completeness, rules.id_column
+            )
+        )
 
     quarantined = (
         quarantine_ids_for(df, rules.completeness, rules.id_column)

@@ -47,3 +47,17 @@ completeness:
       max_null_ratio: 0.10
       severity: warn
       quarantine: false
+
+# Off by default: it names two columns ("price" and a source column) that only
+# make sense once your feed actually has a source/competitor/scraper-id column
+# to group by. `completeness.price` above tolerates 2% missing feed-wide, but
+# that average hides a single source that is missing prices on most of its own
+# rows — see docs/IMPROVEMENTS.md item 1. Turn this on once your feed has a
+# source column, pointing `column` at the same field you already gate on above.
+per_source_completeness:
+  enabled: false
+  column: price
+  source_column: source
+  max_null_ratio: 0.10
+  severity: fail
+  min_source_rows: 3
