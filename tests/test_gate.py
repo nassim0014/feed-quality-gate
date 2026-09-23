@@ -7,6 +7,7 @@ import json
 from feed_quality_gate.gate import evaluate, gate
 from feed_quality_gate.models import CheckResult, FeedReport, Severity
 from feed_quality_gate.report import exit_code, to_console, to_json, to_markdown
+from feed_quality_gate.rules import Rules
 
 
 class TestEvaluate:
@@ -65,6 +66,44 @@ class TestEvaluate:
             ],
         )
         assert report.score == 0
+        assert not report.gate_passed
+
+
+class TestPerSourceCompletenessInEvaluate:
+    def test_off_by_default(self, multi_source_feed, rules, now):
+        """The default `rules` fixture has per_source_completeness disabled."""
+        report = evaluate(multi_source_feed, rules, now=now)
+        assert "per_source_completeness" not in [r.name for r in report.results]
+
+    def test_catches_a_collapsed_source_a_feed_wide_tolerance_would_miss(
+        self, multi_source_feed, now
+    ):
+        rules = Rules.from_mapping(
+            {
+                "feed_id": "multi-source",
+                "id_column": "product_id",
+                "timestamp_column": "scraped_at",
+                "freshness": {"max_age_days": 7},
+                "completeness": {
+                    "columns": {"price": {"max_null_ratio": 0.20, "severity": "fail"}}
+                },
+                "per_source_completeness": {
+                    "enabled": True,
+                    "column": "price",
+                    "source_column": "source",
+                    "max_null_ratio": 0.10,
+                    "severity": "fail",
+                },
+            }
+        )
+        report = evaluate(multi_source_feed, rules, now=now)
+        failure_names = [r.name for r in report.failures]
+
+        # the feed-wide rate (16%) clears the 20% column tolerance, so only
+        # the per-source check — which sees the collapsed source directly —
+        # catches it.
+        assert "completeness:price" not in failure_names
+        assert "per_source_completeness" in failure_names
         assert not report.gate_passed
 
 

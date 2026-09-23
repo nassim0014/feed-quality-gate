@@ -46,6 +46,30 @@ class CompletenessRule(BaseModel):
     columns: dict[str, ColumnRule] = Field(default_factory=dict)
 
 
+class PerSourceCompletenessRule(BaseModel):
+    """Per-source tolerance for missing values in one column.
+
+    ``completeness`` above applies a tolerance to the whole feed at once, which
+    is the wrong denominator for one failure mode: a single source can be
+    missing ``column`` on the large majority of its own rows and still be
+    invisible in a feed-wide ratio. This rule groups by ``source_column`` and
+    applies ``max_null_ratio`` to each group independently.
+
+    Disabled by default — unlike ``completeness``, it names two columns that
+    do not exist until a rules file sets them, so an unconfigured feed must
+    not fail because this block is present with empty defaults.
+    """
+
+    enabled: bool = False
+    column: str = ""
+    source_column: str = ""
+    max_null_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
+    severity: Severity = Severity.FAIL
+    #: Sources with fewer rows than this are skipped — a single-row source at
+    #: 100% missing is not evidence of a collapse, just a small cohort.
+    min_source_rows: int = Field(default=1, ge=1)
+
+
 class Rules(BaseModel):
     """A complete rule set for one feed."""
 
@@ -54,6 +78,9 @@ class Rules(BaseModel):
     timestamp_column: str | None = None
     freshness: FreshnessRule = Field(default_factory=FreshnessRule)
     completeness: CompletenessRule = Field(default_factory=CompletenessRule)
+    per_source_completeness: PerSourceCompletenessRule = Field(
+        default_factory=PerSourceCompletenessRule
+    )
 
     @classmethod
     def from_mapping(cls, data: dict[str, Any]) -> Rules:

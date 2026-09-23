@@ -10,10 +10,11 @@ import pytest
 from feed_quality_gate.checks import (
     check_column_completeness,
     check_freshness,
+    check_per_source_completeness,
     quarantine_ids_for,
 )
 from feed_quality_gate.models import Severity
-from feed_quality_gate.rules import ColumnRule, FreshnessRule
+from feed_quality_gate.rules import ColumnRule, FreshnessRule, PerSourceCompletenessRule
 
 
 class TestFreshness:
@@ -168,3 +169,103 @@ class TestQuarantineSelection:
     def test_falls_back_to_index_without_an_id_column(self, rules):
         df = pd.DataFrame({"price": [1.0, None], "category": ["a", "b"]})
         assert quarantine_ids_for(df, rules.completeness, None) == [1]
+
+
+class TestPerSourceCompleteness:
+    def test_collapsed_source_fails_though_global_rate_looks_survivable(
+        self, multi_source_feed
+    ):
+        """16% missing feed-wide is one source missing 80% of its own rows."""
+        rule = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.10
+        )
+        r = check_per_source_completeness(multi_source_feed, rule, "product_id")
+        assert not r.passed
+        assert set(r.details["offending_sources"]) == {"collapsed"}
+        assert r.details["offending_sources"]["collapsed"] == {
+            "count": 8,
+            "total": 10,
+            "ratio": 0.8,
+        }
+        assert r.count == 8
+        assert set(r.offending) == {f"C{i:03d}" for i in range(8)}
+        assert "collapsed" in r.message
+
+    def test_healthy_feed_passes(self, multi_source_feed):
+        rule = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.90
+        )
+        r = check_per_source_completeness(multi_source_feed, rule, "product_id")
+        assert r.passed
+        assert r.details["offending_sources"] == {}
+
+    def test_boundary_is_inclusive(self, multi_source_feed):
+        at_limit = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.8
+        )
+        assert check_per_source_completeness(
+            multi_source_feed, at_limit, "product_id"
+        ).passed
+
+        just_under = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.79
+        )
+        assert not check_per_source_completeness(
+            multi_source_feed, just_under, "product_id"
+        ).passed
+
+    def test_min_source_rows_skips_small_cohorts(self):
+        """A 2-row source at 100% missing is a small cohort, not a collapse."""
+        df = pd.DataFrame(
+            {"product_id": ["A", "B"], "price": [None, None], "source": ["tiny", "tiny"]}
+        )
+        rule = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.0, min_source_rows=5
+        )
+        r = check_per_source_completeness(df, rule, "product_id")
+        assert r.passed
+
+    def test_missing_column_fails_loudly(self, multi_source_feed):
+        rule = PerSourceCompletenessRule(column="does_not_exist", source_column="source")
+        r = check_per_source_completeness(multi_source_feed, rule, "product_id")
+        assert not r.passed
+        assert r.details["missing_column"] == "does_not_exist"
+
+    def test_missing_source_column_fails_loudly(self, multi_source_feed):
+        rule = PerSourceCompletenessRule(column="price", source_column="does_not_exist")
+        r = check_per_source_completeness(multi_source_feed, rule, "product_id")
+        assert not r.passed
+        assert r.details["missing_column"] == "does_not_exist"
+
+    def test_empty_feed_passes(self, multi_source_feed):
+        rule = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.0
+        )
+        r = check_per_source_completeness(
+            multi_source_feed.iloc[0:0], rule, "product_id"
+        )
+        assert r.passed
+
+    def test_falls_back_to_index_without_an_id_column(self):
+        df = pd.DataFrame({"price": [None, None, 10.0], "source": ["a", "a", "a"]})
+        rule = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.5
+        )
+        r = check_per_source_completeness(df, rule, None)
+        assert not r.passed
+        assert set(r.offending) == {0, 1}
+
+    def test_nan_source_value_is_grouped_and_labelled(self):
+        df = pd.DataFrame(
+            {
+                "product_id": ["A", "B", "C"],
+                "price": [None, None, 10.0],
+                "source": [None, None, None],
+            }
+        )
+        rule = PerSourceCompletenessRule(
+            column="price", source_column="source", max_null_ratio=0.5
+        )
+        r = check_per_source_completeness(df, rule, "product_id")
+        assert not r.passed
+        assert "<missing>" in r.details["offending_sources"]
