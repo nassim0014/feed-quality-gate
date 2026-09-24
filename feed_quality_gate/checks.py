@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import warnings
 from datetime import UTC, datetime
+from typing import Any
 
 import pandas as pd
 
 from .models import CheckResult
-from .rules import ColumnRule, CompletenessRule, FreshnessRule
+from .rules import ColumnRule, CompletenessRule, FreshnessRule, PerSourceCompletenessRule
 
 #: How many offending ids to carry in a CheckResult before truncating.
 SAMPLE_LIMIT = 10
@@ -189,6 +190,105 @@ def check_completeness(
         check_column_completeness(df, column, column_rule, id_column)
         for column, column_rule in rule.columns.items()
     ]
+
+
+def check_per_source_completeness(
+    df: pd.DataFrame,
+    rule: PerSourceCompletenessRule,
+    id_column: str | None = None,
+) -> CheckResult:
+    """Fail when any one source's missing rate exceeds the tolerance.
+
+    Grouping is the point: a feed-wide missing-price rate of ~6% can be one
+    source missing 79% of its own catalogue averaged against everything else
+    that is fine. That source is invisible to ``check_column_completeness``,
+    which only ever sees the global ratio, and its rows then silently vanish
+    from every downstream comparison. This check applies the same tolerance
+    per source instead of once to the whole feed.
+    """
+    name = "per_source_completeness"
+
+    if not rule.column or rule.column not in df.columns:
+        return CheckResult(
+            name=name,
+            passed=False,
+            severity=rule.severity,
+            total=len(df),
+            message=(
+                f"column {rule.column!r} is required by per_source_completeness "
+                "but absent from the feed"
+            ),
+            details={"missing_column": rule.column},
+        )
+
+    if not rule.source_column or rule.source_column not in df.columns:
+        return CheckResult(
+            name=name,
+            passed=False,
+            severity=rule.severity,
+            total=len(df),
+            message=(
+                f"source column {rule.source_column!r} is required by "
+                "per_source_completeness but absent from the feed"
+            ),
+            details={"missing_column": rule.source_column},
+        )
+
+    if df.empty:
+        return CheckResult(
+            name=name,
+            passed=True,
+            severity=rule.severity,
+            message="feed is empty — no sources to check",
+        )
+
+    blank = _is_blank(df[rule.column])
+    work = pd.DataFrame({"__source": df[rule.source_column], "__blank": blank})
+
+    offending: dict[str, dict[str, Any]] = {}
+    offending_ids: list = []
+    for source, sub in work.groupby("__source", dropna=False):
+        total = len(sub)
+        if total < rule.min_source_rows:
+            continue
+        count = int(sub["__blank"].sum())
+        ratio = count / total
+        if ratio > rule.max_null_ratio:
+            label = "<missing>" if pd.isna(source) else str(source)
+            offending[label] = {"count": count, "total": total, "ratio": round(ratio, 6)}
+            blank_ids_in_group = df.loc[sub.index[sub["__blank"]]]
+            offending_ids.extend(_row_ids(blank_ids_in_group, id_column))
+
+    passed = not offending
+    total_offending_rows = sum(v["count"] for v in offending.values())
+
+    if passed:
+        message = f"no source exceeds the {rule.max_null_ratio:.1%} tolerance for {rule.column!r}"
+    else:
+        detail = ", ".join(
+            f"{source} ({v['count']}/{v['total']}, {v['ratio']:.1%})"
+            for source, v in offending.items()
+        )
+        message = (
+            f"{len(offending)} source(s) exceed the {rule.max_null_ratio:.1%} "
+            f"tolerance for {rule.column!r}: {detail}"
+        )
+
+    return CheckResult(
+        name=name,
+        passed=passed,
+        severity=rule.severity,
+        count=total_offending_rows,
+        total=len(df),
+        message=message,
+        offending=offending_ids[:SAMPLE_LIMIT],
+        details={
+            "column": rule.column,
+            "source_column": rule.source_column,
+            "max_null_ratio": rule.max_null_ratio,
+            "offending_sources": offending,
+        },
+    )
 
 
 def quarantine_ids_for(

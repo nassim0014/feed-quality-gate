@@ -16,19 +16,6 @@ they are not hypothetical.
 
 ## Now
 
-### 1. `checks.per_source_completeness` — catch a single source collapsing
-
-Group the feed by its source column (name it in the rules, don't assume it) and
-flag any individual source whose missing-value rate exceeds a per-source
-threshold, independently of the global rate. Report the offending source and its
-rate, not just a boolean.
-
-**Why:** a global missing-price rate of ~6% can hide one source that is missing
-prices on 79% of its own catalogue. The global average is the wrong denominator:
-a single collapsed source is invisible in it, and that source's products then
-silently vanish from every downstream comparison. This is the highest-value
-check remaining because it changes *what you can see*, not just what you reject.
-
 ### 2. `checks.stuck_value_cluster` — flag placeholder/fallback values
 
 Within each source, flag when `min_cluster_size` or more rows share an identical
@@ -149,6 +136,22 @@ note is what makes a threshold adjustable by someone other than its author.
 
 ## Done
 
+- **1. `checks.per_source_completeness`** — cloud-improvements loop, 2026-09-23.
+  New `PerSourceCompletenessRule` (`rules.py`, disabled by default — it names a
+  `column` and `source_column` that don't exist until a rules file sets them)
+  and `check_per_source_completeness` (`checks.py`), wired into `evaluate()`
+  behind `rules.per_source_completeness.enabled`. Groups by `source_column` and
+  applies `max_null_ratio` per group instead of feed-wide, reporting each
+  offending source's own count/total/ratio in `details["offending_sources"]`
+  and a sample of its offending row ids — not just a pass/fail boolean, per the
+  original ask. `min_source_rows` skips cohorts too small for a missing-rate to
+  be meaningful. Documented (commented out) in `rules.example.yaml`; the README
+  "not built yet" list updated. New `TestPerSourceCompleteness` in
+  `tests/test_checks.py` covers the boundary, `min_source_rows`, both missing
+  columns, an empty feed, the id-column fallback and a NaN source value; a new
+  `TestPerSourceCompletenessInEvaluate` in `tests/test_gate.py` is the headline
+  case — a feed whose 16% feed-wide missing rate clears a 20% column tolerance
+  but whose one collapsed source (80% missing) trips a 10% per-source one.
 - **0. CI workflow added** — closed loop, 2026-09-10. `.github/workflows/ci.yml`
   now present: `ruff check .` + `pytest -q` on Python 3.11 and 3.12, then a CLI
   smoke test that runs `fqg check` against the intentionally-broken example feed

@@ -136,13 +136,14 @@ YAML file, never editing this package.
 ## What v1 does and does not do
 
 **Ships now:** `freshness` (feed-level staleness), `completeness` (per-column
-missingness, treating `null`, `""` and whitespace alike), scoring, quarantine
-partitioning, JSON/console/Markdown reports, and the `fqg` CLI.
+missingness, treating `null`, `""` and whitespace alike), `per_source_completeness`
+(the same tolerance applied per source, so one collapsed source cannot hide
+behind a healthy global average), scoring, quarantine partitioning,
+JSON/console/Markdown reports, and the `fqg` CLI.
 
 **Not built yet** — these are the ranked backlog in
 [`docs/IMPROVEMENTS.md`](docs/IMPROVEMENTS.md), not hidden gaps:
 
-- per-source completeness (a single source collapsing is invisible in a global average)
 - stuck-value cluster detection (N rows sharing one suspicious price)
 - non-product row detection
 - zero-yield source detection
@@ -169,7 +170,7 @@ credentials. Core stays installable by anyone; the integration seam is opt-in.
 
 ```bash
 pip install -e ".[dev]"
-pytest          # 45 tests
+pytest          # 56 tests
 ruff check .
 ```
 
