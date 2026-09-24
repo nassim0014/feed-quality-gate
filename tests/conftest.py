@@ -84,6 +84,38 @@ def stale_feed(clean_feed: pd.DataFrame) -> pd.DataFrame:
 
 
 @pytest.fixture
+def multi_source_feed() -> pd.DataFrame:
+    """Two sources: one fully populated, one collapsed on price.
+
+    50 rows total: 40 from ``healthy``, 10 from ``collapsed`` where 8/10 (80%)
+    have no price. The feed-wide missing rate is 8/50 = 16% — elevated, but
+    nowhere near as alarming as "one source is missing 4 out of 5 prices",
+    which is exactly the gap `per_source_completeness` exists to close.
+    """
+    fresh = NOW - timedelta(hours=6)
+    rows = [
+        {
+            "product_id": f"H{i:03d}",
+            "price": 20.0 + i,
+            "category": "oils",
+            "source": "healthy",
+            "scraped_at": fresh,
+        }
+        for i in range(40)
+    ] + [
+        {
+            "product_id": f"C{i:03d}",
+            "price": None if i < 8 else 15.0,
+            "category": "oils",
+            "source": "collapsed",
+            "scraped_at": fresh,
+        }
+        for i in range(10)
+    ]
+    return _feed(rows)
+
+
+@pytest.fixture
 def holey_feed(clean_feed: pd.DataFrame) -> pd.DataFrame:
     """Fresh, but with missing prices expressed the way scrapers express them.
 
