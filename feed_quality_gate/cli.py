@@ -42,6 +42,7 @@ def check(
     report: Path | None = typer.Option(None, "--report", help="Write the JSON report here."),
     clean: Path | None = typer.Option(None, "--clean", help="Write passing rows here (CSV)."),
     quarantine: Path | None = typer.Option(None, "--quarantine", help="Held-back rows (CSV)."),
+    html: Path | None = typer.Option(None, "--html", help="Write a self-contained HTML report."),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress the console summary."),
 ) -> None:
     """Evaluate a feed and exit non-zero if it fails the gate."""
@@ -63,6 +64,9 @@ def check(
     if quarantine:
         quarantine.parent.mkdir(parents=True, exist_ok=True)
         quarantined_df.to_csv(quarantine, index=False)
+    if html:
+        html.parent.mkdir(parents=True, exist_ok=True)
+        html.write_text(report_mod.to_html(result), encoding="utf-8")
 
     if not quiet:
         typer.echo(report_mod.to_console(result))
