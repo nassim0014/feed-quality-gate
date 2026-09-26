@@ -6,7 +6,7 @@ import json
 
 from feed_quality_gate.gate import evaluate, gate
 from feed_quality_gate.models import CheckResult, FeedReport, Severity
-from feed_quality_gate.report import exit_code, to_console, to_json, to_markdown
+from feed_quality_gate.report import exit_code, to_console, to_html, to_json, to_markdown
 from feed_quality_gate.rules import Rules
 
 
@@ -163,3 +163,37 @@ class TestReportRendering:
     def test_exit_code_tracks_the_verdict(self, clean_feed, stale_feed, rules, now):
         assert exit_code(evaluate(clean_feed, rules, now=now)) == 0
         assert exit_code(evaluate(stale_feed, rules, now=now)) == 1
+
+    def test_html_is_a_self_contained_page_carrying_the_verdict(
+        self, holey_feed, rules, now
+    ):
+        report = evaluate(holey_feed, rules, now=now)
+        page = to_html(report)
+        assert page.startswith("<!doctype html")
+        assert "</html>" in page
+        assert str(report.score) in page
+        assert "FAILED" in page
+        assert "completeness:price" in page
+        assert "P000" in page  # a quarantined row id
+
+    def test_html_escapes_untrusted_feed_content(self, holey_feed, rules, now):
+        """A check's message/offending sample can be arbitrary feed data.
+
+        Nothing about `evaluate()` sanitises it, so `to_html()` must, or a
+        crafted row turns the report itself into an XSS vector.
+        """
+        report = evaluate(holey_feed, rules, now=now)
+        report.results.append(
+            CheckResult(
+                name="probe",
+                passed=False,
+                severity=Severity.WARN,
+                message="<script>alert(1)</script>",
+                offending=["<img src=x onerror=alert(1)>"],
+            )
+        )
+        page = to_html(report)
+        assert "<script>" not in page
+        assert "<img " not in page
+        assert "&lt;script&gt;" in page
+        assert "&lt;img src=x onerror=alert(1)&gt;" in page

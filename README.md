@@ -72,8 +72,12 @@ Write the artifacts out:
 
 ```bash
 fqg check -i examples/sample_feed.csv -r rules.example.yaml \
-  --report report.json --clean clean.csv --quarantine held.csv
+  --report report.json --clean clean.csv --quarantine held.csv --html report.html
 ```
+
+`--html` writes a single, dependency-free page — a score gauge plus a
+colour-coded PASS/FAIL/WARN table per check — for anyone who would rather open
+a file than pipe JSON through `jq`.
 
 `fqg explain -r rules.example.yaml` prints the rule set as the gate actually
 resolved it, defaults included.
