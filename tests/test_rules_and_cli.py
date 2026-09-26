@@ -130,6 +130,27 @@ class TestCli:
         assert "P3" not in clean_p.read_text()
         assert "P3" in held_p.read_text()
 
+    def test_writes_html_report(self, tmp_path):
+        rows = FRESH_ROWS + [
+            {"product_id": "P3", "price": None, "scraped_at": "2099-01-01T00:00:00Z"}
+        ]
+        feed = _write_feed(tmp_path, rows)
+        rules = _write_rules(tmp_path, RULES_BODY)
+        html_p = tmp_path / "out" / "report.html"
+
+        res = runner.invoke(
+            app,
+            [
+                "check", "-i", str(feed), "-r", str(rules),
+                "--html", str(html_p),
+                "--quiet",
+            ],
+        )
+        assert res.exit_code == 1
+        content = html_p.read_text()
+        assert content.startswith("<!doctype html")
+        assert "cli-test" in content
+
     def test_bad_rules_exit_two_not_one(self, tmp_path):
         """Config error and data failure must be distinguishable by exit code."""
         feed = _write_feed(tmp_path, FRESH_ROWS)
