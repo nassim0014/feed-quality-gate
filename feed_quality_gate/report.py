@@ -59,7 +59,7 @@ def to_markdown(report: FeedReport) -> str:
     """A Markdown table, for pasting into a findings file or a PR body."""
     verdict = "PASSED" if report.gate_passed else "FAILED"
     lines = [
-        f"### Feed `{report.feed_id}` — {verdict} ({report.score}/100)",
+        f"### Feed `{report.feed_id}` - {verdict} ({report.score}/100)",
         "",
         f"- rows: {report.row_count}",
         f"- quarantined: {len(report.quarantined_ids)}",
@@ -75,7 +75,7 @@ def to_markdown(report: FeedReport) -> str:
 
 
 def to_html(report: FeedReport) -> str:
-    """A single, dependency-free HTML page — for a viewer with no terminal.
+    """A single, dependency-free HTML page - for a viewer with no terminal.
 
     Everything is inlined (no external CSS/JS/fonts) so the file is safe to
     hand to `--html`, attach to a CI run, or open directly from disk. Every
@@ -113,7 +113,7 @@ def to_html(report: FeedReport) -> str:
         if more > 0:
             sample += f" (+{more} more)"
         quarantine_html = (
-            f'<p class="quarantine">held back: {len(report.quarantined_ids)} row(s) — {sample}</p>'
+            f'<p class="quarantine">held back: {len(report.quarantined_ids)} row(s) - {sample}</p>'
         )
 
     return f"""<!doctype html>
@@ -185,7 +185,7 @@ def to_html(report: FeedReport) -> str:
 def exit_code(report: FeedReport) -> int:
     """0 when the gate passes, 1 when a FAIL-severity check failed.
 
-    WARN-severity failures deliberately do not change the exit code — they
+    WARN-severity failures deliberately do not change the exit code - they
     lower the score and show up in the report, but they must not break a
     pipeline, or nobody will leave the gate switched on.
     """

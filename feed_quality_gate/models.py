@@ -1,8 +1,8 @@
 """Value objects for feed quality results.
 
 Everything here is JSON-serialisable by design. The whole point of the gate is
-to emit a machine-readable verdict that another process — price-bridge, an
-Airflow task, or the loop-engine findings tooling — can consume without
+to emit a machine-readable verdict that another process - price-bridge, an
+Airflow task, or the loop-engine findings tooling - can consume without
 re-parsing prose.
 """
 
@@ -41,7 +41,7 @@ class CheckResult:
 
     ``count``/``total`` are row counts where the check is row-oriented (e.g.
     completeness) and left at 0/0 where it is feed-oriented (e.g. freshness).
-    ``offending`` is a *sample*, not the full set — the full set lives in
+    ``offending`` is a *sample*, not the full set - the full set lives in
     ``FeedReport.quarantined_ids``.
     """
 

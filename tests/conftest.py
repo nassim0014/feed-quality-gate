@@ -1,7 +1,7 @@
 """Synthetic fixtures.
 
 Every row here is invented. No real feed, catalogue, competitor or customer
-data is ever committed to this repository — the gate is generic by design and
+data is ever committed to this repository - the gate is generic by design and
 its tests must stay that way.
 """
 
@@ -55,7 +55,7 @@ def rules() -> Rules:
 
 @pytest.fixture
 def clean_feed() -> pd.DataFrame:
-    """Fresh, fully populated — should sail through the gate."""
+    """Fresh, fully populated - should sail through the gate."""
     fresh = NOW - timedelta(hours=6)
     return _feed(
         [
@@ -88,7 +88,7 @@ def multi_source_feed() -> pd.DataFrame:
     """Two sources: one fully populated, one collapsed on price.
 
     50 rows total: 40 from ``healthy``, 10 from ``collapsed`` where 8/10 (80%)
-    have no price. The feed-wide missing rate is 8/50 = 16% — elevated, but
+    have no price. The feed-wide missing rate is 8/50 = 16% - elevated, but
     nowhere near as alarming as "one source is missing 4 out of 5 prices",
     which is exactly the gap `per_source_completeness` exists to close.
     """

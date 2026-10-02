@@ -1,13 +1,12 @@
 """The checks themselves.
 
 Every check is a pure function of ``(DataFrame, rule)`` returning a
-``CheckResult``. No I/O, no database, no network, no global state — which is
+``CheckResult``. No I/O, no database, no network, no global state - which is
 what makes them trivially testable against synthetic fixtures and safe to run
 inside an Airflow task or a CLI alike.
 
-v1 ships the two founding checks. See ``docs/IMPROVEMENTS.md`` for the ranked
-list of checks to add next; each one is an independent pure function and so is
-a self-contained pull request.
+v1 ships the two founding checks; each additional check is an independent
+pure function and so is a self-contained pull request.
 """
 
 from __future__ import annotations
@@ -43,7 +42,7 @@ def _is_blank(series: pd.Series) -> pd.Series:
 
     # Test for "text-like" rather than `dtype == object`: pandas 2.x types a CSV
     # string column as `object`, pandas 3.x types it as `str`, and an equality
-    # check against `object` silently stops matching on 3.x — letting every
+    # check against `object` silently stops matching on 3.x - letting every
     # whitespace-only value through as if it were populated.
     text_like = pd.api.types.is_object_dtype(series) or pd.api.types.is_string_dtype(
         series
@@ -75,7 +74,7 @@ def check_freshness(
             severity=rule.severity,
             message=(
                 "freshness is enabled but no `timestamp_column` is set in the "
-                "rules — cannot tell whether this feed is stale"
+                "rules - cannot tell whether this feed is stale"
             ),
         )
 
@@ -86,7 +85,7 @@ def check_freshness(
             severity=rule.severity,
             message=(
                 f"timestamp column {timestamp_column!r} is not present in the "
-                "feed — a column the scraper used to emit may have been dropped"
+                "feed - a column the scraper used to emit may have been dropped"
             ),
         )
 
@@ -95,7 +94,7 @@ def check_freshness(
             name="freshness",
             passed=False,
             severity=rule.severity,
-            message="feed is empty — no rows to date",
+            message="feed is empty - no rows to date",
         )
 
     # A feed's timestamps may be mixed or unparseable; that is exactly what this
@@ -110,7 +109,7 @@ def check_freshness(
             passed=False,
             severity=rule.severity,
             message=(
-                f"no parseable timestamps in {timestamp_column!r} — "
+                f"no parseable timestamps in {timestamp_column!r} - "
                 "every value failed to parse as a date"
             ),
         )
@@ -239,7 +238,7 @@ def check_per_source_completeness(
             name=name,
             passed=True,
             severity=rule.severity,
-            message="feed is empty — no sources to check",
+            message="feed is empty - no sources to check",
         )
 
     blank = _is_blank(df[rule.column])

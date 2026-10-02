@@ -73,7 +73,7 @@ def gate(
 
     Returns ``(report, clean_df, quarantined_df)``. The split is row-level and
     happens regardless of the overall verdict, so a caller can consume the good
-    rows from a feed that failed the gate — which is the difference between a
+    rows from a feed that failed the gate - which is the difference between a
     gate and a trip-wire.
     """
     report = evaluate(df, rules, now=now)

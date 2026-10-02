@@ -15,7 +15,7 @@ runner = CliRunner()
 
 class TestRuleLoading:
     def test_shipped_example_is_valid(self):
-        """rules.example.yaml is documentation — it must actually parse."""
+        """rules.example.yaml is documentation - it must actually parse."""
         rules = load_rules("rules.example.yaml")
         assert rules.feed_id == "example-competitor-prices"
         assert rules.timestamp_column == "scraped_at"

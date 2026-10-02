@@ -21,7 +21,7 @@ coverage.xml
 htmlcov/
 .mypy_cache/
 
-# Gate output artifacts — verdicts are reproducible, never committed
+# Gate output artifacts - verdicts are reproducible, never committed
 report.json
 clean.csv
 held.csv
