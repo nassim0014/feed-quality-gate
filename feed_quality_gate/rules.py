@@ -1,7 +1,7 @@
 """Declarative rule configuration.
 
 Rules are data, not code. A new feed is onboarded by writing a YAML file, not
-by editing this package — that is what makes the gate reusable across the
+by editing this package - that is what makes the gate reusable across the
 scraped-price feed, an accounting extract, or anything else tabular.
 
 No feed schema is hardcoded anywhere in this repo. Column names always come
@@ -55,7 +55,7 @@ class PerSourceCompletenessRule(BaseModel):
     invisible in a feed-wide ratio. This rule groups by ``source_column`` and
     applies ``max_null_ratio`` to each group independently.
 
-    Disabled by default — unlike ``completeness``, it names two columns that
+    Disabled by default - unlike ``completeness``, it names two columns that
     do not exist until a rules file sets them, so an unconfigured feed must
     not fail because this block is present with empty defaults.
     """
@@ -65,7 +65,7 @@ class PerSourceCompletenessRule(BaseModel):
     source_column: str = ""
     max_null_ratio: float = Field(default=0.0, ge=0.0, le=1.0)
     severity: Severity = Severity.FAIL
-    #: Sources with fewer rows than this are skipped — a single-row source at
+    #: Sources with fewer rows than this are skipped - a single-row source at
     #: 100% missing is not evidence of a collapse, just a small cohort.
     min_source_rows: int = Field(default=1, ge=1)
 
@@ -116,4 +116,4 @@ def load_rules(path: str | Path) -> Rules:
             f"{'.'.join(str(x) for x in e['loc']) or '<root>'}: {e['msg']}"
             for e in exc.errors()
         )
-        raise RulesError(f"invalid rules in {p} — {problems}") from exc
+        raise RulesError(f"invalid rules in {p} - {problems}") from exc

@@ -41,7 +41,7 @@ and linting.
 
 ## Try it
 
-The repo ships a deliberately broken example feed — stale, with two missing
+The repo ships a deliberately broken example feed - stale, with two missing
 prices (one empty, one whitespace-only) and one missing category:
 
 ```bash
@@ -66,7 +66,7 @@ held:   2 row(s) quarantined
 ```
 
 Exit code is `1`. The freshness age grows as real time passes, so the exact
-number above will differ — the verdict will not.
+number above will differ - the verdict will not.
 
 Write the artifacts out:
 
@@ -75,8 +75,8 @@ fqg check -i examples/sample_feed.csv -r rules.example.yaml \
   --report report.json --clean clean.csv --quarantine held.csv --html report.html
 ```
 
-`--html` writes a single, dependency-free page — a score gauge plus a
-colour-coded PASS/FAIL/WARN table per check — for anyone who would rather open
+`--html` writes a single, dependency-free page - a score gauge plus a
+colour-coded PASS/FAIL/WARN table per check - for anyone who would rather open
 a file than pipe JSON through `jq`.
 
 `fqg explain -r rules.example.yaml` prints the rule set as the gate actually
@@ -101,7 +101,7 @@ load_into_warehouse(clean_df)   # the good rows are still usable
 
 | Concept | What it is |
 | --- | --- |
-| **Feed** | Any tabular batch of rows — a DataFrame, CSV, Parquet or JSON file. |
+| **Feed** | Any tabular batch of rows - a DataFrame, CSV, Parquet or JSON file. |
 | **Rules** | A YAML file naming the id/timestamp columns and the per-column tolerances. |
 | **Check** | A pure function `(df, rule) -> CheckResult`. No I/O, no globals. |
 | **Severity** | `fail` blocks the gate, `warn` only lowers the score, `info` is advisory. |
@@ -110,8 +110,8 @@ load_into_warehouse(clean_df)   # the good rows are still usable
 
 ### Two questions, deliberately kept separate
 
-`evaluate()` answers *"is this feed trustworthy?"* — a feed-level verdict.
-`gate()` also answers *"which rows are safe?"* — a row-level split.
+`evaluate()` answers *"is this feed trustworthy?"* - a feed-level verdict.
+`gate()` also answers *"which rows are safe?"* - a row-level split.
 
 Conflating them is what turns a gate into a trip-wire. A feed can be 99%
 complete and still contain rows with no price; those rows must not reach a
@@ -125,7 +125,7 @@ partition is produced even when the overall gate fails.
 | --- | --- |
 | `0` | Gate passed. `warn` failures may still be present in the report. |
 | `1` | A `fail`-severity check failed. |
-| `2` | The rules file is missing or invalid — a config error, not a data verdict. |
+| `2` | The rules file is missing or invalid - a config error, not a data verdict. |
 
 `warn` deliberately does not change the exit code. A gate that breaks the build
 over a cosmetic gap gets switched off, and a gate that is switched off catches
@@ -145,8 +145,7 @@ missingness, treating `null`, `""` and whitespace alike), `per_source_completene
 behind a healthy global average), scoring, quarantine partitioning,
 JSON/console/Markdown reports, and the `fqg` CLI.
 
-**Not built yet** — these are the ranked backlog in
-[`docs/IMPROVEMENTS.md`](docs/IMPROVEMENTS.md), not hidden gaps:
+**Not built yet** - the gaps below are ranked, not hidden:
 
 - stuck-value cluster detection (N rows sharing one suspicious price)
 - non-product row detection
@@ -160,7 +159,7 @@ consumer; this gate validates and never transforms.
 
 ## Relationship to `analytics-service-toolkit` (`astk`)
 
-`astk` is the shared operational substrate — settings, DB engines, Slack
+`astk` is the shared operational substrate - settings, DB engines, Slack
 alerting, dashboard chrome. This gate is a natural consumer of it, and the
 backlog items that need config loading, a DB source adapter or alerting are
 written against it.
@@ -178,14 +177,13 @@ pytest          # 56 tests
 ruff check .
 ```
 
-Tests use synthetic fixtures exclusively. See [`CLAUDE.md`](CLAUDE.md) for
-conventions.
+Tests use synthetic fixtures exclusively and make no network calls.
 
 CI runs `ruff` and `pytest` on Python 3.11 and 3.12, then smoke-tests the CLI
-against the intentionally-broken example feed and fails if the gate passes it —
+against the intentionally-broken example feed and fails if the gate passes it -
 see [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The `[astk]` extra is
 deliberately not installed in CI (private repo, no credentials).
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).

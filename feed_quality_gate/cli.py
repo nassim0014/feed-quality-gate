@@ -1,4 +1,4 @@
-"""`fqg` — run the gate from a shell, a CI step, or an Airflow BashOperator.
+"""`fqg` - run the gate from a shell, a CI step, or an Airflow BashOperator.
 
 The important behaviour is the exit code: `fqg check` exits non-zero when a
 FAIL-severity check fails, so it can be dropped in front of a sync job without

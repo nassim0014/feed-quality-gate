@@ -100,7 +100,7 @@ class TestPerSourceCompletenessInEvaluate:
         failure_names = [r.name for r in report.failures]
 
         # the feed-wide rate (16%) clears the 20% column tolerance, so only
-        # the per-source check — which sees the collapsed source directly —
+        # the per-source check - which sees the collapsed source directly -
         # catches it.
         assert "completeness:price" not in failure_names
         assert "per_source_completeness" in failure_names
@@ -122,7 +122,7 @@ class TestGateSplit:
         assert not clean.empty
 
     def test_stale_feed_is_not_split(self, stale_feed, rules, now):
-        """Freshness is feed-level — there is no such thing as a stale row."""
+        """Freshness is feed-level - there is no such thing as a stale row."""
         _, clean, held = gate(stale_feed, rules, now=now)
         assert len(clean) == 50
         assert held.empty

@@ -1,4 +1,4 @@
-"""feed-quality-gate — validate, score and quarantine a tabular feed.
+"""feed-quality-gate - validate, score and quarantine a tabular feed.
 
 Typical use::
 
