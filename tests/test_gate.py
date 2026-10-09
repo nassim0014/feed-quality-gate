@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from feed_quality_gate.gate import evaluate, gate
 from feed_quality_gate.models import CheckResult, FeedReport, Severity
@@ -197,3 +198,40 @@ class TestReportRendering:
         assert "<img " not in page
         assert "&lt;script&gt;" in page
         assert "&lt;img src=x onerror=alert(1)&gt;" in page
+
+    def test_markdown_escapes_pipes_and_newlines_in_feed_derived_text(
+        self, holey_feed, rules, now
+    ):
+        """A `|` or newline from feed data must not corrupt the table.
+
+        `per_source_completeness` builds its message from the feed's own
+        source-column values, so an untrusted value containing a literal `|`
+        (e.g. a source name like "Acme | Legacy Feed") would otherwise split
+        one cell into extra columns, and a newline would end the row early -
+        corrupting every row rendered after it. Same class of untrusted-data
+        problem `to_html` already guards against in the test above.
+        """
+        report = evaluate(holey_feed, rules, now=now)
+        report.results.append(
+            CheckResult(
+                name="probe",
+                passed=False,
+                severity=Severity.WARN,
+                message="1 source(s) exceed tolerance: Acme | Legacy Feed\nSecond line",
+            )
+        )
+        md = to_markdown(report)
+
+        # Split on *unescaped* pipes only - an escaped `\|` is one cell's
+        # content, not a column boundary, so a naive `line.split("|")` would
+        # wrongly count it as one.
+        cell_split = re.compile(r"(?<!\\)\|")
+        table_rows = [line for line in md.splitlines() if line.startswith("|")]
+        header_width = len(cell_split.split(table_rows[0]))
+        for line in table_rows:
+            assert len(cell_split.split(line)) == header_width
+        assert "Second line" in md
+        assert "Acme \\| Legacy Feed" in md
+        # No bare newline inside the table - it would end the row early and
+        # corrupt whatever markdown renders after it.
+        assert "\n" not in table_rows[-1]
