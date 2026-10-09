@@ -55,6 +55,20 @@ def to_console(report: FeedReport) -> str:
     return "\n".join(lines)
 
 
+def _md_escape(text: str) -> str:
+    """Make arbitrary text safe to sit inside one Markdown table cell.
+
+    A check's ``message`` (and in principle its ``name``) can embed arbitrary
+    feed data - ``per_source_completeness`` builds its message straight from
+    the feed's own source-column values, the same untrusted content
+    ``to_html`` escapes for exactly this reason (see its docstring). An
+    un-escaped ``|`` splits one logical cell into extra columns, and a literal
+    newline ends the row early and corrupts every row rendered after it. Both
+    turn a real failure into a garbled table instead of a readable one.
+    """
+    return text.replace("|", "\\|").replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+
+
 def to_markdown(report: FeedReport) -> str:
     """A Markdown table, for pasting into a findings file or a PR body."""
     verdict = "PASSED" if report.gate_passed else "FAILED"
@@ -70,7 +84,9 @@ def to_markdown(report: FeedReport) -> str:
     ]
     for r in report.results:
         sev = r.severity.value if not r.passed else "-"
-        lines.append(f"| `{r.name}` | {_MARK[r.passed]} | {sev} | {r.message} |")
+        name = _md_escape(r.name)
+        message = _md_escape(r.message)
+        lines.append(f"| `{name}` | {_MARK[r.passed]} | {sev} | {message} |")
     return "\n".join(lines)
 
 
